@@ -4,6 +4,7 @@ from io import BytesIO
 from urllib.parse import urljoin, urlparse, urlunparse
 
 import requests
+import tiktoken
 from bs4 import BeautifulSoup
 from PyPDF2 import PdfFileReader
 
@@ -12,6 +13,21 @@ default_root_urls = [
 ]
 default_ignore_urls = []
 file_path = os.path.join(os.path.expanduser('~/Desktop'), 'page-content.txt')
+
+
+def count_tokens(text: str, model: str = 'gpt-4') -> int:
+    """
+    受け取ったテキストのトークン数を返す
+
+    Args:
+        text (str): 受け取ったテキスト
+        model (str, optional): トークナイザーのモデル名. Defaults to 'gpt-4'.
+
+    Returns:
+        int: 受け取ったテキストのトークン数
+    """
+    encoding = tiktoken.encoding_for_model(model)
+    return len(encoding.encode(text))
 
 
 class WebCrawlerScraper:
@@ -98,6 +114,13 @@ class WebCrawlerScraper:
         text_content = ''
         for url, content in sorted_data.items():
             text_content += f"{url}\n\"\"\"\n{content}\n\"\"\"\n\n"
+        # 文字数を表示する。このとき、文字数を三文字カンマまで表示する
+        print()
+        char_size = "{:,}".format(len(text_content))
+        print("Total Characters:", char_size)
+        # トークン数を表示する。このとき、トークン数を三文字カンマまで表示する
+        token_size = "{:,}".format(count_tokens(text_content))
+        print("Total Tokens:", token_size)
         return text_content
 
     def save_to_file(self):
@@ -106,7 +129,8 @@ class WebCrawlerScraper:
         # デスクトップにpage-content.txtを作成
         with open(file_path, 'w', encoding='utf-8') as file:
             file.write(text_content)
-        print("\n", "Create File:", file_path, "\n")
+        print()
+        print("Create File:", file_path, "\n")
 
 
 # 使用例
@@ -114,7 +138,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='指定したURLからサイトマップを作成します。'
     )
-    parser.add_argument('root_urls', metavar='root_url', type=str, nargs='+', default=default_root_urls)
+    parser.add_argument('root_urls', metavar='root_url', type=str, nargs='*', default=default_root_urls)
     parser.add_argument('-i', '--ignore-urls', metavar='ignore_url', type=str, nargs='*', default=default_ignore_urls)
     args = parser.parse_args()
     crawler_scraper = WebCrawlerScraper(args.root_urls, args.ignore_urls)
