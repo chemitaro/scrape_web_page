@@ -27,15 +27,16 @@ class WebCrawlerScraper:
         parsed_url = urlparse(url)
         return urlunparse(parsed_url._replace(query="", fragment=""))
 
-    def is_subpath(self, url, root_url):
-        return urlparse(url).path.startswith(urlparse(root_url).path)
+    def is_subpath(self, url):
+        # URLがルートURLのサブパスかどうかを判定する
+        return any(url.startswith(root_url) for root_url in self.root_urls)
 
     def should_ignore(self, url):
         return any(ignore_url in url for ignore_url in self.ignore_urls)
 
     def explore_and_scrape(self, url, root_url):
         normalized_url = self.normalize_url(url)
-        if normalized_url in self.visited_urls or not self.is_subpath(normalized_url, root_url) or self.should_ignore(normalized_url):
+        if normalized_url in self.visited_urls or not self.is_subpath(normalized_url) or self.should_ignore(normalized_url):
             return
         self.visited_urls.add(normalized_url)
         print('Exploring:', len(self.visited_urls), '/', len(self.found_urls))
@@ -61,9 +62,8 @@ class WebCrawlerScraper:
             href = link['href']
             full_url = self.normalize_url(urljoin(normalized_url, href))
             if not (full_url.endswith('.pdf') or full_url.endswith('.jpg') or full_url.endswith('.jpeg')):
-                if urlparse(full_url).netloc == urlparse(root_url).netloc and not self.should_ignore(full_url):
-                    if full_url not in self.found_urls and self.is_subpath(full_url, root_url):
-                        self.found_urls.add(full_url)
+                if full_url not in self.found_urls and self.is_subpath(full_url) and not self.should_ignore(full_url):
+                    self.found_urls.add(full_url)
 
     def scrape_content(self, soup, url):
         for selector in ['header', 'footer', 'nav', 'aside']:
