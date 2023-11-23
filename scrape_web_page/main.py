@@ -39,7 +39,7 @@ class WebCrawlerScraper:
         if normalized_url in self.visited_urls or not self.is_subpath(normalized_url) or self.should_ignore(normalized_url):
             return
         self.visited_urls.add(normalized_url)
-        print('Exploring:', len(self.visited_urls), '/', len(self.found_urls))
+        print('Exploring:', len(self.visited_urls), '/', len(self.found_urls), '\n', normalized_url)
 
         if normalized_url.endswith('.pdf') or normalized_url.endswith('.jpg') or normalized_url.endswith('.jpeg'):
             print(f'Skipping file URL: {normalized_url}')
