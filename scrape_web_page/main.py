@@ -12,7 +12,8 @@ default_root_urls = [
     ''
 ]
 default_ignore_urls = []
-file_path = os.path.join(os.path.expanduser('~/Desktop'), 'page-content.txt')
+default_file_dir = '~/Desktop'
+default_file_name = 'page-content'
 
 
 def count_tokens(text: str, model: str = 'gpt-4') -> int:
@@ -31,13 +32,14 @@ def count_tokens(text: str, model: str = 'gpt-4') -> int:
 
 
 class WebCrawlerScraper:
-    def __init__(self, root_urls, ignore_urls=None):
+    def __init__(self, root_urls, ignore_urls=None, output_file_name=default_file_name):
         # WebCrawlerの初期化
         self.root_urls = [self.normalize_url(url) for url in (root_urls if isinstance(root_urls, list) else [root_urls])]
         self.ignore_urls = set(ignore_urls) if ignore_urls else set()
         self.found_urls = set()
         self.visited_urls = set()
         self.scraped_data = {}
+        self.output_file_name = output_file_name
 
     def normalize_url(self, url):
         parsed_url = urlparse(url)
@@ -127,6 +129,8 @@ class WebCrawlerScraper:
         """テキストをファイルに保存する"""
         text_content = self.convert_to_text()
         # デスクトップにpage-content.txtを作成
+        file_path = os.path.join(os.path.expanduser(default_file_dir), f"{self.output_file_name}.txt")
+        print(file_path)
         with open(file_path, 'w', encoding='utf-8') as file:
             file.write(text_content)
         print()
@@ -140,7 +144,9 @@ if __name__ == '__main__':
     )
     parser.add_argument('root_urls', metavar='root_url', type=str, nargs='*', default=default_root_urls)
     parser.add_argument('-i', '--ignore-urls', metavar='ignore_url', type=str, nargs='*', default=default_ignore_urls)
+    # ファイル名を指定する
+    parser.add_argument('-f', '--output_file_name', metavar='output_file_name', type=str, default=default_file_name)
     args = parser.parse_args()
-    crawler_scraper = WebCrawlerScraper(args.root_urls, args.ignore_urls)
+    crawler_scraper = WebCrawlerScraper(args.root_urls, args.ignore_urls, args.output_file_name)
     crawler_scraper.crawl_and_scrape()
     crawler_scraper.save_to_file()
